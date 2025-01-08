@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { PlayIcon, PauseIcon, MonitorStopIcon as StopIcon } from "lucide-react";
+import {
+  PlayIcon,
+  PauseIcon,
+  MonitorStopIcon as StopIcon,
+  RefreshCwIcon,
+} from "lucide-react";
 
-export default function Timer({ currentTask, updateTaskTime }) {
+export default function Timer({ currentTask, updateTaskTime, isEditable }) {
   const [isRunning, setIsRunning] = useState(false);
   const [time, setTime] = useState(0);
 
@@ -18,6 +23,11 @@ export default function Timer({ currentTask, updateTaskTime }) {
     return () => clearInterval(interval);
   }, [isRunning]);
 
+  useEffect(() => {
+    setTime(0);
+    setIsRunning(false);
+  }, [currentTask]);
+
   const handleStart = () => setIsRunning(true);
   const handlePause = () => setIsRunning(false);
   const handleStop = () => {
@@ -27,35 +37,58 @@ export default function Timer({ currentTask, updateTaskTime }) {
     }
     setTime(0);
   };
+  const handleReset = () => setTime(0);
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
 
   return (
-    <div className="text-center">
-      <h2 className="text-2xl font-bold mb-4">
+    <div className="bg-background p-6 rounded-xl shadow-sm border">
+      <h2 className="text-xl font-semibold text-foreground text-center mb-4">
         {currentTask ? currentTask.name : "No task selected"}
       </h2>
-      <div className="text-4xl font-mono mb-4">
-        {Math.floor(time / 60)
-          .toString()
-          .padStart(2, "0")}
-        :{(time % 60).toString().padStart(2, "0")}
+      <div className="text-5xl font-mono text-center text-primary mb-6 tabular-nums">
+        {formatTime(time)}
       </div>
-      <div className="space-x-2">
-        <Button onClick={handleStart} disabled={!currentTask || isRunning}>
-          <PlayIcon className="h-5 w-5 mr-1" />
-          Start
-        </Button>
-        <Button onClick={handlePause} disabled={!isRunning}>
-          <PauseIcon className="h-5 w-5 mr-1" />
-          Pause
-        </Button>
-        <Button
-          onClick={handleStop}
-          disabled={!currentTask || (!isRunning && time === 0)}
-        >
-          <StopIcon className="h-5 w-5 mr-1" />
-          Stop
-        </Button>
-      </div>
+      {isEditable && (
+        <div className="flex justify-center space-x-3">
+          <Button
+            onClick={handleStart}
+            disabled={!currentTask || isRunning}
+            className="w-24"
+          >
+            <PlayIcon className="h-4 w-4 mr-2" />
+            Start
+          </Button>
+          <Button onClick={handlePause} disabled={!isRunning} className="w-24">
+            <PauseIcon className="h-4 w-4 mr-2" />
+            Pause
+          </Button>
+          <Button
+            onClick={handleStop}
+            disabled={!currentTask || (!isRunning && time === 0)}
+            className="w-24"
+          >
+            <StopIcon className="h-4 w-4 mr-2" />
+            Stop
+          </Button>
+          <Button
+            onClick={handleReset}
+            disabled={!currentTask || time === 0}
+            variant="outline"
+            className="w-24"
+          >
+            <RefreshCwIcon className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

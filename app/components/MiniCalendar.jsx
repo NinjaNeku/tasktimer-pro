@@ -12,13 +12,13 @@ import {
   isSameDay,
   addMonths,
   subMonths,
+  isToday,
 } from "date-fns";
-import { ChevronLeftIcon, ChevronRightIcon, MaximizeIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "./ui/button";
 
-export default function MiniCalendar({ selectedDate, setSelectedDate }) {
+export default function MiniCalendar({ selectedDate, setSelectedDate, tasks }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -28,14 +28,24 @@ export default function MiniCalendar({ selectedDate, setSelectedDate }) {
   const renderHeader = () => {
     const dateFormat = "MMMM yyyy";
     return (
-      <div className="flex justify-between items-center mb-2">
-        <Button onClick={prevMonth} variant="outline" size="icon">
+      <div className="flex justify-between items-center mb-4">
+        <Button
+          onClick={prevMonth}
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+        >
           <ChevronLeftIcon className="h-4 w-4" />
         </Button>
-        <span className="text-sm font-bold">
+        <span className="text-lg font-semibold text-foreground">
           {format(currentMonth, dateFormat)}
         </span>
-        <Button onClick={nextMonth} variant="outline" size="icon">
+        <Button
+          onClick={nextMonth}
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+        >
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
@@ -43,17 +53,20 @@ export default function MiniCalendar({ selectedDate, setSelectedDate }) {
   };
 
   const renderDays = () => {
-    const dateFormat = "EEEEE";
+    const dateFormat = "EEE";
     const days = [];
     let startDate = startOfWeek(currentMonth);
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div key={i} className="text-center text-xs font-bold">
+        <div
+          key={i}
+          className="text-center text-sm font-medium text-muted-foreground"
+        >
           {format(addDays(startDate, i), dateFormat)}
         </div>
       );
     }
-    return <div className="grid grid-cols-7 gap-1 mb-1">{days}</div>;
+    return <div className="grid grid-cols-7 mb-2">{days}</div>;
   };
 
   const renderCells = () => {
@@ -73,19 +86,43 @@ export default function MiniCalendar({ selectedDate, setSelectedDate }) {
       for (let i = 0; i < 7; i++) {
         formattedDate = format(day, dateFormat);
         const cloneDay = day;
+        const dayTasks = tasks.filter(
+          (task) => task.date === format(cloneDay, "yyyy-MM-dd")
+        );
+        const isSelected = isSameDay(day, selectedDate);
+        const isCurrentDay = isToday(day);
+        const isCurrentMonth = isSameMonth(day, monthStart);
+
         days.push(
           <div
             key={day}
-            className={`p-1 text-center text-xs ${
-              !isSameMonth(day, monthStart)
-                ? "text-gray-400"
-                : isSameDay(day, selectedDate)
-                ? "bg-blue-500 text-white"
-                : ""
-            } cursor-pointer`}
             onClick={() => onDateClick(cloneDay)}
+            className={`
+              relative p-2 text-center transition-colors cursor-pointer
+              hover:bg-accent hover:text-accent-foreground rounded-lg
+              ${!isCurrentMonth ? "text-muted-foreground" : "text-foreground"}
+              ${
+                isSelected
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : ""
+              }
+              ${
+                isCurrentDay && !isSelected
+                  ? "bg-accent text-accent-foreground font-semibold"
+                  : ""
+              }
+            `}
           >
-            {formattedDate}
+            <span className="text-sm">{formattedDate}</span>
+            {dayTasks.length > 0 && (
+              <div
+                className={`text-xs mt-1 font-medium ${
+                  isSelected ? "text-primary-foreground/80" : "text-primary"
+                }`}
+              >
+                {dayTasks.length} task{dayTasks.length > 1 ? "s" : ""}
+              </div>
+            )}
           </div>
         );
         day = addDays(day, 1);
@@ -97,21 +134,12 @@ export default function MiniCalendar({ selectedDate, setSelectedDate }) {
       );
       days = [];
     }
-    return <div className="mb-2">{rows}</div>;
+    return <div className="space-y-1">{rows}</div>;
   };
 
   return (
-    <div className={`border p-2 rounded ${isExpanded ? "w-full" : "w-64"}`}>
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-bold">Calendar</h3>
-        <Button
-          onClick={() => setIsExpanded(!isExpanded)}
-          variant="outline"
-          size="icon"
-        >
-          <MaximizeIcon className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="bg-background p-6 rounded-xl shadow-sm border">
+      <h2 className="text-xl font-semibold text-foreground mb-4">Calendar</h2>
       {renderHeader()}
       {renderDays()}
       {renderCells()}
